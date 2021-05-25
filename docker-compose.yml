@@ -1,0 +1,38 @@
+version: '3'
+services:
+  golang:
+    build: golang/.
+    tty: true
+    ports:
+      - ${PORT}:${PORT}
+    volumes:
+    - ./app/:/go/src/app
+#    command: "go run main.go"
+
+  mongodb:
+    build: mongodb/.
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+    ports:
+      - 27017:27017
+    volumes:
+      - mongodb:/data/db
+      - configdb:/data/configdb
+
+  mongo-express:
+    build: mongodb-express/.
+    restart: always
+    ports:
+      - 8081:8081
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: ${ME_CONFIG_MONGODB_ADMINUSERNAME}
+      ME_CONFIG_MONGODB_ADMINPASSWORD: ${ME_CONFIG_MONGODB_ADMINPASSWORD}
+      ME_CONFIG_MONGODB_SERVER: ${ME_CONFIG_MONGODB_SERVER}
+    depends_on:
+      - mongodb
+
+volumes:
+  mongodb:
+  configdb:
