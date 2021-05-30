@@ -1,0 +1,14 @@
+{% extends 'base/base.html' %}
+
+{% block content %}
+    <table border="1">
+        <tr>
+            <th>Chatroom名</th>
+        </tr>
+        {% for room in object_list %}
+            <tr>
+                <td><a href="{% url 'chatroom:detail' room.pk %}">{{ room.name }}</a></td>
+            </tr>
+        {% endfor %}
+    </table>
+{% endblock %}

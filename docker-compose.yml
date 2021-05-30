@@ -3,10 +3,12 @@ services:
   golang:
     build: golang/.
     tty: true
-    ports:
-      - ${PORT}:${PORT}
+#    ports:
+#      - ${PORT}:${PORT}
     volumes:
     - ./app/:/go/src/app
+    expose:
+      - ${PORT}
 #    command: "go run main.go"
 
   mongodb:
@@ -33,6 +35,53 @@ services:
     depends_on:
       - mongodb
 
+  python3:
+    build: ./python3
+    command: uwsgi --socket :8001 --module project.wsgi --py-autoreload 1 --logto /tmp/app.log
+    volumes:
+      - ./src:/src
+      - ./src/static:/src/static
+    environment:
+      PYTHONPATH: /src
+      TZ: ${TZ}
+    expose:
+      - "8001"
+    depends_on:
+      - mysql
+
+  mysql:
+    build: ./mysql
+    command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      TZ: ${TZ}
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./sql:/docker-entrypoint-initdb.d
+
+  nginx:
+    build:
+      context: ./nginx
+      args:
+        TZ: $TZ
+    ports:
+      - "8000:8000"
+      - "8080:8080"
+    volumes:
+      - ./nginx/conf:/etc/nginx/conf.d
+      - ./nginx/uwsgi_params:/etc/nginx/uwsgi_params
+      - ./src/static:/src/static
+      - ./app/:/go/src/app
+    depends_on:
+      - python3
+      - golang
+
 volumes:
   mongodb:
   configdb:
+  mysql-data:
