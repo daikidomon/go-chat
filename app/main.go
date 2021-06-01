@@ -1,11 +1,11 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
-	"unsafe"
 
 	"app/models"
 	"github.com/gin-gonic/gin"
@@ -13,6 +13,11 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"gopkg.in/olahol/melody.v1"
 )
+
+type ReceiveData struct {
+	UserId string `json:"userId"`
+	Text   string `json:"text"`
+}
 
 func init() {
 	connectionString := os.Getenv("MONGODB_CONNECTION_STRING")
@@ -41,13 +46,18 @@ func main() {
 		m.HandleRequest(ctx.Writer, ctx.Request)
 	})
 
-	m.HandleMessage(func(s *melody.Session, msg []byte) {
-		doc := models.NewMessage("user_id", 1, *(*string)(unsafe.Pointer(&msg)))
-		err := mgm.Coll(doc).Create(doc)
+	m.HandleMessage(func(s *melody.Session, data []byte) {
+		var receiveData ReceiveData
+		err := json.Unmarshal(data, &receiveData)
 		if err != nil {
 			log.Fatal(err)
+		}
+		doc := models.NewMessage(receiveData.UserId, 1, receiveData.Text)
+		err2 := mgm.Coll(doc).Create(doc)
+		if err2 != nil {
+			log.Fatal(err2)
 		} else {
-			m.Broadcast(msg)
+			m.Broadcast(data)
 		}
 	})
 
