@@ -21,31 +21,43 @@
 <center>
     <h3>Sample Chat</h3>
     <pre id="chat"></pre>
-    <label id="title"></label>
-    <input placeholder="say something" id="text" type="text">
+    <table>
+        <tbody>
+            <tr>
+                <label name="userid">userid:</label>
+                <input name="userid" placeholder="userid" id="userid" type="text">
+            </tr>
+            <tr>
+                <label name="text">Message:</label>
+                <input name="text" placeholder="say something" id="text" type="text">
+            </tr>
+        </tbody>
+    </table>
 </center>
 
 <script>
-    var url = "ws://" + window.location.host + "/ws";
-    var ws = new WebSocket(url);
-    var name = "Guest-" + Math.floor(Math.random() * 1000);
-    var chat = document.getElementById("chat");
-    var obj = { userId:'', text:''};
-    obj.userId = name;
-    document.getElementById("title").innerText = name + ": ";
+    let url = "ws://" + window.location.host + "/ws";
+    let ws = new WebSocket(url);
+    let chat = document.getElementById("chat");
+    let userid = document.getElementById("userid");
+    let obj = { userId:'', text:''};
 
-    var text = document.getElementById("text");
-    var now = function () {
+    const now = function () {
         return new Date().toLocaleString();
     };
 
     ws.onmessage = function (msg) {
-        var line =  now() + " : " + msg.data + "\n";
+        let msgObj = JSON.parse(msg.data)
+        let line =  now() + " : " + msgObj.userId + " > " + msgObj.text + "\n";
         chat.innerText += line;
     };
 
     text.onkeydown = function (e) {
+        obj.userId = userid.value;
         obj.text = text.value;
+        if (obj.userId === '') {
+            obj.userId = 'undefined';
+        }
         if (e.keyCode === 13 && text.value !== "") {
             ws.send(JSON.stringify(obj));
             text.value = "";
