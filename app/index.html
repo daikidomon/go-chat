@@ -6,7 +6,7 @@
 <style>
     #chat {
         text-align: left;
-        color:#ffffff;
+        color: #ffffff;
         background: #113131;
         width: 400px;
         min-height: 300px;
@@ -23,14 +23,14 @@
     <pre id="chat"></pre>
     <table>
         <tbody>
-            <tr>
-                <label name="userid">userid:</label>
-                <input name="userid" placeholder="userid" id="userid" type="text">
-            </tr>
-            <tr>
-                <label name="text">Message:</label>
-                <input name="text" placeholder="say something" id="text" type="text">
-            </tr>
+        <tr>
+            <label name="userid">userid:</label>
+            <input name="userid" placeholder="userid" id="userid" type="text">
+        </tr>
+        <tr>
+            <label name="text">Message:</label>
+            <input name="text" placeholder="say something" id="text" type="text">
+        </tr>
         </tbody>
     </table>
 </center>
@@ -40,17 +40,41 @@
     let ws = new WebSocket(url);
     let chat = document.getElementById("chat");
     let userid = document.getElementById("userid");
-    let obj = { userId:'', text:''};
+    let obj = {userId: '', text: ''};
 
     const now = function () {
         return new Date().toLocaleString();
     };
 
+
+    const requestAjax = function (endpoint, callback) {
+        let xhr = new XMLHttpRequest();
+        xhr.onreadystatechange = function () {
+            if (this.readyState === 4 && this.status === 200) {
+                callback(this.response);
+            }
+        };
+        xhr.responseType = 'json';
+        xhr.open('GET', endpoint, true);
+        xhr.send();
+    };
+
     ws.onmessage = function (msg) {
         let msgObj = JSON.parse(msg.data)
-        let line =  now() + " : " + msgObj.userId + " > " + msgObj.text + "\n";
+        let line = now() + " : " + msgObj.userId + " > " + msgObj.text + "\n";
         chat.innerText += line;
+        console.log(msg);
     };
+
+    ws.onopen = function (msg) {
+        requestAjax("http://" + window.location.host + "/api", function (response) {
+            let line;
+            response.forEach(function (message) {
+                line = now() + " : " + message.user_id + " > " + message.text + "\n";
+                chat.innerText += line;
+            });
+        });
+    }
 
     text.onkeydown = function (e) {
         obj.userId = userid.value;

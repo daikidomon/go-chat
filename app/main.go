@@ -10,6 +10,7 @@ import (
 	"app/models"
 	"github.com/gin-gonic/gin"
 	"github.com/kamva/mgm/v3"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"gopkg.in/olahol/melody.v1"
 )
@@ -35,6 +36,7 @@ func main() {
 	log.Println("Websocket App start.")
 
 	router := gin.Default()
+	router.LoadHTMLGlob("*.tmpl")
 	m := melody.New()
 
 	rg := router.Group("/")
@@ -44,6 +46,12 @@ func main() {
 
 	rg.GET("/ws", func(ctx *gin.Context) {
 		m.HandleRequest(ctx.Writer, ctx.Request)
+	})
+
+	rg.GET("/api", func(ctx *gin.Context) {
+		messages := []models.Message{}
+		_ = mgm.Coll(&models.Message{}).SimpleFind(&messages, bson.M{})
+		ctx.JSON(200, messages)
 	})
 
 	m.HandleMessage(func(s *melody.Session, data []byte) {
