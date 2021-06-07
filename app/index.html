@@ -43,7 +43,13 @@
     let obj = {userId: '', text: ''};
 
     const now = function () {
-        return new Date().toLocaleString();
+        let date = new Date();
+        return date.getFullYear()
+            + '/' + ('0' + (date.getMonth() + 1)).slice(-2)
+            + '/' + ('0' + date.getDate()).slice(-2)
+            + ' ' + ('0' + date.getHours()).slice(-2)
+            + ':' + ('0' + date.getMinutes()).slice(-2)
+            + ':' + ('0' + date.getSeconds()).slice(-2);
     };
 
 
@@ -67,12 +73,21 @@
     };
 
     ws.onopen = function (msg) {
+        let line;
         requestAjax("http://" + window.location.host + "/api", function (response) {
-            let line;
             response.forEach(function (message) {
-                line = now() + " : " + message.user_id + " > " + message.text + "\n";
+                let epoch = Date.parse(message.created_at);
+                let date = new Date(epoch);
+                let jst = date.getFullYear()
+                    + '/' + ('0' + (date.getMonth() + 1)).slice(-2)
+                    + '/' + ('0' + date.getDate()).slice(-2)
+                    + ' ' + ('0' + date.getHours()).slice(-2)
+                    + ':' + ('0' + date.getMinutes()).slice(-2)
+                    + ':' + ('0' + date.getSeconds()).slice(-2);
+                line = jst + " : " + message.user_id + " > " + message.text + "\n";
                 chat.innerText += line;
             });
+            chat.innerText += now() + " : Connection Successfully." + "\n";
         });
     }
 
